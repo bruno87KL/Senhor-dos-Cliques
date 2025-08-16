@@ -1,1 +1,17 @@
+body {
+  text-align: center;
+  font-family: Arial, sans-serif;
+  background: #222;
+  color: white;
+}
+
+#enemy {
+  background: #550000;
+  padding: 30px;
+  margin: 20px auto;
+  width: 200px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 20px;
+}
 
