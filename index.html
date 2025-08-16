@@ -1,40 +1,264 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RPG Clicker Avançado</title>
-<link rel="stylesheet" href="styles.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RPG Click – Personagens</title>
+<style>
+  :root { --bg:#0f0f14; --panel:#141a22; --ink:#e9eef5; --muted:#a7b0bd; --accent:#6ea8ff; --ok:#4ade80; --warn:#fbbf24; }
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,Arial,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:1100px;margin:auto;padding:20px}
+  h1{margin:0 0 10px;font-size:28px}
+  .row{display:grid;grid-template-columns:1.2fr 1fr;gap:18px}
+  .panel{background:var(--panel);border:1px solid #1f2937;border-radius:14px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+  .enemy{cursor:pointer;user-select:none}
+  .hpbar{height:14px;background:#243042;border-radius:999px;overflow:hidden;margin-top:8px}
+  .hp{height:100%;width:100%;background:var(--ok);transition:width .15s}
+  .stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;color:var(--muted)}
+  .stats b{color:var(--ink)}
+  .btn{appearance:none;border:1px solid #334155;background:#1e293b;color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer}
+  .btn:hover{filter:brightness(1.1)}
+  .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .card{background:#0f1620;border:1px solid #223044;border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center}
+  .card h3{margin:0 0 4px;font-size:16px}
+  .card p{margin:0;font-size:12px;color:var(--muted);line-height:1.2}
+  .pick{margin-left:auto}
+  .tag{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid #2b3a4f;color:#c9d6e5}
+  .active{outline:2px solid var(--accent)}
+  svg{width:56px;height:56px;flex:0 0 56px;border-radius:12px;background:#0b121a}
+  .bar{display:flex;gap:6px;align-items:center;margin-top:10px}
+  .bar .tag{border-color:#425878}
+  .small{font-size:12px;color:var(--muted)}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>⚔ RPG Clicker Avançado ⚔</h1>
+<div class="wrap">
+  <h1>⚔️ RPG Click – Seleção de Personagens</h1>
 
-    <!-- Inimigo -->
-    <div id="enemy-container" onclick="attackEnemy()">
-      <div id="enemy-name"></div>
-      <div class="hp-bar"><div id="enemy-hp-bar"></div></div>
-      <div id="enemy-hp-text"></div>
-    </div>
+  <div class="row">
+    <!-- Jogo/preview -->
+    <section class="panel">
+      <h2 style="margin:0 0 6px;font-size:18px">Campo de batalha (clique no inimigo)</h2>
+      <div id="enemy" class="enemy">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><b id="enemyName">Slime</b> • <span class="small">Recompensa <b id="reward">5</b> ouro</span></div>
+          <div class="tag" id="heroTag">Sem herói</div>
+        </div>
+        <div class="hpbar"><div id="hp" class="hp"></div></div>
+        <div class="stats">
+          <div>HP: <b id="hpText">20/20</b></div>
+          <div>Ouro: <b id="gold">0</b></div>
+          <div>Dano: <b id="dmg">1</b></div>
+          <div>Crítico: <b id="crit">0%</b> (x<b id="critMult">1.5</b>)</div>
+          <div>Multiplicador de ouro: <b id="gmult">1.0×</b></div>
+        </div>
+        <div class="bar">
+          <button class="btn" id="btnUpgrade">🔼 Upgrade +1 dano (10 ouro)</button>
+          <button class="btn" id="btnNext">➡️ Próximo inimigo</button>
+        </div>
+      </div>
+    </section>
 
-    <!-- Stats do jogador -->
-    <div class="stats">
-      <p>💰 Ouro: <span id="gold">0</span></p>
-      <p>🗡 Dano: <span id="damage">1</span></p>
-      <p>🏅 Nível: <span id="level">1</span></p>
-    </div>
-
-    <!-- Botões de upgrade -->
-    <button onclick="upgrade()">🔼 Upgrade de Dano (Custo: <span id="upgradeCost">10</span>)</button>
-    <button onclick="upgradeGold()">💰 Upgrade de Ouro (Custo: <span id="goldUpgradeCost">20</span>)</button>
-
-    <!-- Quest log -->
-    <div id="quest-log">
-      <h2>📝 Missão:</h2>
-      <p id="quest-text"></p>
-    </div>
+    <!-- Personagens -->
+    <section class="panel">
+      <h2 style="margin:0 0 6px;font-size:18px">Heróis</h2>
+      <p class="small" style="margin:0 0 10px">Escolha um herói para aplicar bônus passivos no seu dano/ouro/crítico.</p>
+      <div id="heroes" class="grid"></div>
+    </section>
   </div>
+</div>
 
-  <script src="game.js"></script>
+<script>
+/* ===================== DADOS DE PERSONAGENS ===================== */
+const HEROES = [
+  {
+    id:'guerreiro', nome:'Guerreiro',
+    cor:'#6ea8ff',
+    bonus:{ dano: +2, crit: 0.05, critMult: 1.7, goldMult: 1.0 },
+    desc:'Espadachim resiliente. +2 dano base, 5% crítico.',
+    draw:(svg)=>face(svg,'#6ea8ff','#3b82f6')
+  },
+  {
+    id:'arqueira', nome:'Arqueira',
+    cor:'#a7f3d0',
+    bonus:{ dano:+1, crit:0.15, critMult:1.6, goldMult:1.0 },
+    desc:'Ataques precisos. 15% crítico.',
+    draw:(svg)=>face(svg,'#a7f3d0','#10b981')
+  },
+  {
+    id:'mago', nome:'Mago',
+    cor:'#c4b5fd',
+    bonus:{ dano:+1, crit:0.08, critMult:2.0, goldMult:1.0 },
+    desc:'Explosões arcanas. Crítico x2.0.',
+    draw:(svg)=>face(svg,'#c4b5fd','#8b5cf6')
+  },
+  {
+    id:'ladina', nome:'Ladina',
+    cor:'#fca5a5',
+    bonus:{ dano:0, crit:0.25, critMult:1.5, goldMult:1.0 },
+    desc:'Golpes furtivos. 25% crítico.',
+    draw:(svg)=>face(svg,'#fca5a5','#ef4444')
+  },
+  {
+    id:'paladino', nome:'Paladino',
+    cor:'#fde68a',
+    bonus:{ dano:+1, crit:0.05, critMult:1.6, goldMult:1.2 },
+    desc:'Causa e prosperidade. +20% ouro.',
+    draw:(svg)=>face(svg,'#fde68a','#f59e0b')
+  },
+  {
+    id:'necromante', nome:'Necromante',
+    cor:'#94a3b8',
+    bonus:{ dano:0, crit:0.10, critMult:1.6, goldMult:1.35 },
+    desc:'Coleta tributos sombrios. +35% ouro.',
+    draw:(svg)=>face(svg,'#94a3b8','#64748b')
+  },
+];
+
+/* ===================== INIMIGOS DE EXEMPLO ===================== */
+const ENEMIES = [
+  { nome:'Slime', hp:20, recompensa:5 },
+  { nome:'Goblin', hp:35, recompensa:9 },
+  { nome:'Lobo Alfa', hp:55, recompensa:14 },
+  { nome:'Golem', hp:90, recompensa:22 },
+];
+
+/* ===================== ESTADO DO JOGO ===================== */
+const player = { baseDmg:1, gold:0, hero:null };
+let enemyIndex = 0;
+let enemy = {...ENEMIES[enemyIndex], hpAtual: ENEMIES[enemyIndex].hp};
+
+/* ===================== RENDERIZAÇÃO DE CARDS ===================== */
+const $heroes = document.getElementById('heroes');
+
+function renderHeroes(){
+  $heroes.innerHTML = '';
+  HEROES.forEach(h=>{
+    const card = document.createElement('div');
+    card.className = 'card'; card.dataset.id = h.id;
+
+    // avatar SVG
+    const svg = makeSVG();
+    h.draw(svg);
+    card.appendChild(svg);
+
+    // textos
+    const box = document.createElement('div');
+    const h3 = document.createElement('h3'); h3.textContent = h.nome; box.appendChild(h3);
+    const p = document.createElement('p'); p.textContent = h.desc; box.appendChild(p);
+
+    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = `+dmg ${h.bonus.dano} • crit ${(h.bonus.crit*100)|0}% • ouro ${h.bonus.goldMult.toFixed(2)}×`;
+    box.appendChild(tag);
+
+    card.appendChild(box);
+
+    // botão
+    const btn = document.createElement('button');
+    btn.className = 'btn pick'; btn.textContent = 'Escolher';
+    btn.onclick = ()=>selectHero(h.id);
+    card.appendChild(btn);
+
+    $heroes.appendChild(card);
+  });
+}
+
+/* ===================== LÓGICA DE HERÓI ===================== */
+function selectHero(id){
+  player.hero = HEROES.find(x=>x.id===id);
+  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('active', c.dataset.id===id));
+  document.getElementById('heroTag').textContent = player.hero ? player.hero.nome : 'Sem herói';
+  updateStatsUI();
+}
+
+/* ===================== COMBATE E UPGRADES ===================== */
+const $hp = document.getElementById('hp'), $hpText = document.getElementById('hpText');
+const $gold = document.getElementById('gold'), $dmg = document.getElementById('dmg');
+const $crit = document.getElementById('crit'), $critMult = document.getElementById('critMult');
+const $gmult = document.getElementById('gmult'), $ename = document.getElementById('enemyName'), $reward = document.getElementById('reward');
+
+function currentDamage(){
+  const bonus = player.hero?.bonus ?? {dano:0,crit:0,critMult:1.5,goldMult:1};
+  let dmg = player.baseDmg + (bonus.dano||0);
+  const isCrit = Math.random() < (bonus.crit||0);
+  if (isCrit) dmg *= (bonus.critMult||1.5);
+  return {dmg: Math.round(dmg), crit:isCrit};
+}
+
+function attack(){
+  const {dmg, crit} = currentDamage();
+  enemy.hpAtual = Math.max(0, enemy.hpAtual - dmg);
+  flashHP(crit);
+  if (enemy.hpAtual === 0){
+    const goldGain = Math.round(enemy.recompensa * (player.hero?.bonus.goldMult || 1));
+    player.gold += goldGain;
+    nextEnemy();
+  }
+  updateStatsUI();
+}
+document.getElementById('enemy').addEventListener('click', attack);
+
+function nextEnemy(){
+  enemyIndex = (enemyIndex + 1) % ENEMIES.length;
+  enemy = {...ENEMIES[enemyIndex], hpAtual: ENEMIES[enemyIndex].hp};
+}
+
+document.getElementById('btnNext').onclick = ()=>{ nextEnemy(); updateStatsUI(); };
+document.getElementById('btnUpgrade').onclick = ()=>{
+  if (player.gold >= 10){ player.gold -= 10; player.baseDmg += 1; updateStatsUI(); }
+};
+
+function updateStatsUI(){
+  const gm = (player.hero?.bonus.goldMult ?? 1);
+  const cm = (player.hero?.bonus.critMult ?? 1.5);
+  const critP = ((player.hero?.bonus.crit ?? 0)*100).toFixed(0);
+  const dmgNow = player.baseDmg + (player.hero?.bonus.dano ?? 0);
+
+  $ename.textContent = enemy.nome;
+  $reward.textContent = enemy.recompensa;
+  $hp.style.width = (enemy.hpAtual/enemy.hp*100)+'%';
+  $hpText.textContent = `${enemy.hpAtual}/${enemy.hp}`;
+  $gold.textContent = player.gold;
+  $dmg.textContent = dmgNow;
+  $crit.textContent = critP+'%';
+  $critMult.textContent = cm.toFixed(1);
+  $gmult.textContent = gm.toFixed(2)+'×';
+}
+
+/* ===================== VISUAL: FLASH NA BARRA DE HP ===================== */
+function flashHP(crit){
+  $hp.style.transition = 'none';
+  $hp.offsetHeight; // reflow
+  $hp.style.transition = 'width .15s';
+  $hp.style.background = crit ? 'var(--warn)' : 'var(--ok)';
+  clearTimeout(flashHP._t); flashHP._t = setTimeout(()=>{$hp.style.background='var(--ok)';}, 120);
+}
+
+/* ===================== UTIL: DESENHO DE AVATARES ===================== */
+function makeSVG(){
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 64 64');
+  return svg;
+}
+function face(svg, base, accent){
+  const ns = 'http://www.w3.org/2000/svg';
+  const g = document.createElementNS(ns,'g');
+  // fundo
+  const r = document.createElementNS(ns,'rect'); r.setAttribute('x','2'); r.setAttribute('y','2'); r.setAttribute('rx','10'); r.setAttribute('width','60'); r.setAttribute('height','60'); r.setAttribute('fill', base); r.setAttribute('opacity','.18'); g.appendChild(r);
+  // cabeça
+  const head = document.createElementNS(ns,'circle'); head.setAttribute('cx','32'); head.setAttribute('cy','26'); head.setAttribute('r','12'); head.setAttribute('fill', base); g.appendChild(head);
+  // olhos
+  const e1 = document.createElementNS(ns,'circle'); e1.setAttribute('cx','27'); e1.setAttribute('cy','26'); e1.setAttribute('r','2'); e1.setAttribute('fill','#0b1118'); g.appendChild(e1);
+  const e2 = document.createElementNS(ns,'circle'); e2.setAttribute('cx','37'); e2.setAttribute('cy','26'); e2.setAttribute('r','2'); e2.setAttribute('fill','#0b1118'); g.appendChild(e2);
+  // corpo
+  const body = document.createElementNS(ns,'rect'); body.setAttribute('x','22'); body.setAttribute('y','36'); body.setAttribute('width','20'); body.setAttribute('height','16'); body.setAttribute('rx','4'); body.setAttribute('fill', accent); g.appendChild(body);
+  // arma
+  const sword = document.createElementNS(ns,'rect'); sword.setAttribute('x','40'); sword.setAttribute('y','40'); sword.setAttribute('width','16'); sword.setAttribute('height','4'); sword.setAttribute('rx','2'); sword.setAttribute('fill','#cbd5e1'); g.appendChild(sword);
+  svg.appendChild(g);
+}
+
+/* ===================== START ===================== */
+renderHeroes();
+updateStatsUI();
+</script>
 </body>
 </html>
