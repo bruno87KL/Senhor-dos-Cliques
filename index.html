@@ -1,24 +1,23 @@
-# Compiled class file
-*.class
-
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RPG Click</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h1>⚔ RPG Click ⚔</h1>
+  
+  <div id="enemy" onclick="attackEnemy()">
+    🐉 Inimigo HP: <span id="enemyHP">10</span>
+  </div>
+  
+  <p>💰 Ouro: <span id="gold">0</span></p>
+  <p>🗡 Dano: <span id="damage">1</span></p>
+  
+  <button onclick="upgrade()">🔼 Comprar Upgrade (Custo: <span id="upgradeCost">10</span> ouro)</button>
+  
+  <script src="game.js"></script>
+</body>
+</html>
