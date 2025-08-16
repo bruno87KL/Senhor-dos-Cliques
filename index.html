@@ -1,23 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RPG Click</title>
-  <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPG Clicker Avançado</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>⚔ RPG Click ⚔</h1>
-  
-  <div id="enemy" onclick="attackEnemy()">
-    🐉 Inimigo HP: <span id="enemyHP">10</span>
+  <div class="container">
+    <h1>⚔ RPG Clicker Avançado ⚔</h1>
+
+    <!-- Inimigo -->
+    <div id="enemy-container" onclick="attackEnemy()">
+      <div id="enemy-name"></div>
+      <div class="hp-bar"><div id="enemy-hp-bar"></div></div>
+      <div id="enemy-hp-text"></div>
+    </div>
+
+    <!-- Stats do jogador -->
+    <div class="stats">
+      <p>💰 Ouro: <span id="gold">0</span></p>
+      <p>🗡 Dano: <span id="damage">1</span></p>
+      <p>🏅 Nível: <span id="level">1</span></p>
+    </div>
+
+    <!-- Botões de upgrade -->
+    <button onclick="upgrade()">🔼 Upgrade de Dano (Custo: <span id="upgradeCost">10</span>)</button>
+    <button onclick="upgradeGold()">💰 Upgrade de Ouro (Custo: <span id="goldUpgradeCost">20</span>)</button>
+
+    <!-- Quest log -->
+    <div id="quest-log">
+      <h2>📝 Missão:</h2>
+      <p id="quest-text"></p>
+    </div>
   </div>
-  
-  <p>💰 Ouro: <span id="gold">0</span></p>
-  <p>🗡 Dano: <span id="damage">1</span></p>
-  
-  <button onclick="upgrade()">🔼 Comprar Upgrade (Custo: <span id="upgradeCost">10</span> ouro)</button>
-  
+
   <script src="game.js"></script>
 </body>
 </html>
